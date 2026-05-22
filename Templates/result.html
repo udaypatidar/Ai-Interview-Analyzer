@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results — AI Interview Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">AI <span>Interview Analyzer</span></a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/#upload">Upload Again</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Your Analysis Results</h2>
+            <p class="section-subtitle">Based on your uploaded interview audio</p>
+
+            <div class="results-grid">
+                <article class="card result-card">
+                    <p class="label">Confidence</p>
+                    <p class="score">{{ confidence }}%</p>
+                </article>
+                <article class="card result-card">
+                    <p class="label">Communication</p>
+                    <p class="score">{{ score }}%</p>
+                </article>
+                <article class="card result-card">
+                    <p class="label">Technical Score</p>
+                    <p class="score">{{ technical }}%</p>
+                </article>
+                <article class="card result-card">
+                    <p class="label">Emotion</p>
+                    <p class="emotion">{{ emotion }}</p>
+                </article>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3 style="color: #fff; margin-bottom: 0.5rem;">Transcript</h3>
+                <div class="transcript-box">{{ transcript }}</div>
+
+                <p style="color: #94a3b8; margin-top: 1rem;">
+                    <strong>Total words:</strong> {{ total_words }} &nbsp;|&nbsp;
+                    <strong>Filler words:</strong> {{ filler_count }}
+                </p>
+
+                <h3 style="color: #fff; margin: 1.5rem 0 0.5rem;">AI Feedback</h3>
+                <ul class="feedback-list">
+                    {% for item in feedback %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <a href="/" class="back-link">← Analyze Another Interview</a>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="copyright">&copy; 2026 AI Interview Analyzer. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

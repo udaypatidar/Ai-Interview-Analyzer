@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+uploads/
+ffmpeg-8.1.1-essentials_build/
+.env
+venv/
+.vscode/

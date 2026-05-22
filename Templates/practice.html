@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Interview — AI Interview Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <a href="/" class="logo">AI <span>Interview Analyzer</span></a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/#upload">Upload</a></li>
+        </ul>
+    </div>
+</nav>
+
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Practice Interview</h2>
+        <p class="section-subtitle">Choose a domain and experience level to start a guided practice.</p>
+
+        <div class="card" style="padding: 1.5rem;">
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+                <div>
+                    <label><strong>Domain</strong></label>
+                    <select id="domain">
+                        <option value="frontend">Frontend</option>
+                        <option value="backend">Backend</option>
+                        <option value="data">Data Science</option>
+                    </select>
+                </div>
+                <div>
+                    <label><strong>Experience</strong></label>
+                    <select id="level">
+                        <option value="junior">Junior</option>
+                        <option value="mid">Mid</option>
+                        <option value="senior">Senior</option>
+                    </select>
+                </div>
+                <div>
+                    <button id="startBtn" class="btn">Start Practice</button>
+                </div>
+            </div>
+
+            <hr style="margin:1rem 0;" />
+
+            <div id="practiceArea" style="display:none;">
+                <h3 id="questionText">Question will appear here</h3>
+                <p id="qIndex" style="color:#94a3b8;">1 / 3</p>
+
+                <div style="margin-top:1rem;">
+                    <button id="recBtn" class="btn">Start Recording</button>
+                    <button id="saveBtn" class="btn" disabled>Stop & Save</button>
+                    <button id="nextBtn" class="btn" disabled>Next Question</button>
+                </div>
+
+                <div id="doneList" style="margin-top:1rem;color:#94a3b8;"></div>
+                <div id="errorBox" style="margin-top:1rem;color:#ff6b6b;"></div>
+
+                <div style="margin-top:1.5rem;">
+                    <button id="completeBtn" class="btn" style="display:none;">Complete & Analyze</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script>
+
+// Global error handler to show errors on page
+window.addEventListener('error', function(e){
+    const box = document.getElementById('errorBox');
+    box.textContent = 'Error: ' + (e.message || e.error || 'Unknown');
+});
+const questionsBank = {
+    frontend: {
+        junior: [
+            "Explain the box model in CSS.",
+            "What is the difference between let, const and var in JavaScript?",
+            "How do you make a website responsive?"
+        ],
+        mid: [
+            "Explain the virtual DOM and how React uses it.",
+            "How would you optimize a slow rendering React component?",
+            "How do CSS preprocessors like SASS help in large projects?"
+        ],
+        senior: [
+            "Describe strategies to architect a large single-page application.",
+            "How do you manage state in complex React apps across many components?",
+            "Explain critical rendering path and performance optimizations for web apps."
+        ]
+    },
+    backend: {
+        junior: [
+            "What is REST and how is it different from SOAP?",
+            "Explain the purpose of a database index.",
+            "What is an API endpoint?"
+        ],
+        mid: [
+            "Explain transactions and ACID properties.",
+            "How would you design authentication for a web service?",
+            "How do you handle scaling a backend service?"
+        ],
+        senior: [
+            "Describe microservices architecture and trade-offs.",
+            "How do you design a system for high availability?",
+            "Explain eventual consistency and when to use it."
+        ]
+    },
+    data: {
+        junior: [
+            "What is the difference between supervised and unsupervised learning?",
+            "Explain precision and recall.",
+            "What is overfitting and how to prevent it?"
+        ],
+        mid: [
+            "Explain cross-validation and why it's used.",
+            "How do you handle missing data in a dataset?",
+            "Describe feature engineering and its importance."
+        ],
+        senior: [
+            "How do you design an ML pipeline for production?",
+            "Explain model interpretability techniques.",
+            "Discuss challenges of deploying and monitoring ML models at scale."
+        ]
+    }
+};
+
+let mediaRecorder;
+let recordedBlobs = [];
+let currentIndex = 0;
+let activeQuestions = [];
+
+const startBtn = document.getElementById('startBtn');
+const domainEl = document.getElementById('domain');
+const levelEl = document.getElementById('level');
+const practiceArea = document.getElementById('practiceArea');
+const questionText = document.getElementById('questionText');
+const qIndex = document.getElementById('qIndex');
+const recBtn = document.getElementById('recBtn');
+const saveBtn = document.getElementById('saveBtn');
+const nextBtn = document.getElementById('nextBtn');
+const doneList = document.getElementById('doneList');
+const completeBtn = document.getElementById('completeBtn');
+
+startBtn.addEventListener('click', () => {
+    const domain = domainEl.value;
+    const level = levelEl.value;
+    activeQuestions = questionsBank[domain][level] || [];
+    currentIndex = 0;
+    recordedBlobs = [];
+    practiceArea.style.display = 'block';
+    completeBtn.style.display = 'none';
+    doneList.innerHTML = '';
+    showQuestion();
+});
+
+function showQuestion(){
+    questionText.textContent = activeQuestions[currentIndex] || 'Done';
+    qIndex.textContent = (currentIndex+1) + ' / ' + activeQuestions.length;
+    recBtn.disabled = false;
+    saveBtn.disabled = true;
+    nextBtn.disabled = true;
+}
+
+recBtn.addEventListener('click', async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Media recording not supported in this browser.');
+        return;
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        recordedBlobs.push(blob);
+        doneList.innerHTML = recordedBlobs.map((b,i)=> `<div>Q${i+1} recorded</div>`).join('');
+        saveBtn.disabled = true;
+        nextBtn.disabled = false;
+        if (recordedBlobs.length === activeQuestions.length) {
+            completeBtn.style.display = 'inline-block';
+            nextBtn.disabled = true;
+        }
+    };
+
+    mediaRecorder.start();
+    recBtn.disabled = true;
+    saveBtn.disabled = false;
+});
+
+saveBtn.addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    }
+});
+
+nextBtn.addEventListener('click', () => {
+    currentIndex++;
+    if (currentIndex < activeQuestions.length) {
+        showQuestion();
+    } else {
+        questionText.textContent = 'All questions recorded.';
+        qIndex.textContent = activeQuestions.length + ' / ' + activeQuestions.length;
+        recBtn.disabled = true;
+        saveBtn.disabled = true;
+        nextBtn.disabled = true;
+        completeBtn.style.display = 'inline-block';
+    }
+});
+
+completeBtn.addEventListener('click', async () => {
+    if (recordedBlobs.length === 0) {
+        alert('No recordings to analyze.');
+        return;
+    }
+
+    const formData = new FormData();
+    const domain = domainEl.value;
+    const level = levelEl.value;
+    formData.append('domain', domain);
+    formData.append('level', level);
+
+    recordedBlobs.forEach((blob, idx) => {
+        const filename = `${domain}_${level}_q${idx+1}.webm`;
+        formData.append('audio', blob, filename);
+    });
+
+    // POST to server and replace current document with response
+    try {
+        const res = await fetch('/practice_analyze', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!res.ok) {
+            const errText = await res.text();
+            document.getElementById('errorBox').textContent = 'Server error: ' + res.status + ' - ' + errText;
+            return;
+        }
+
+        const text = await res.text();
+        document.open();
+        document.write(text);
+        document.close();
+    } catch (err) {
+        document.getElementById('errorBox').textContent = 'Network/JS error: ' + err.message;
+    }
+});
+</script>
+
+</body>
+</html>
